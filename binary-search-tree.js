@@ -25,10 +25,38 @@ Node.prototype.addNodeWithValue = function(value) {
   return this;
 };
 
+Node.prototype.addNode = function(node){
+
+  if (node.value < this.value) {
+    if (this.left) {
+      return this.left.addNode(node);
+    }
+    this.left = node;
+    return this;
+  }
+
+  if ( this.right) {
+    return this.right.addNode(node);
+  }
+
+  this.right = node;
+  return this;
+};
+
+
 function BST() {
   this.root = null;
 }
 
+BST.prototype.addNode = function(node){
+  if (!this.root) {
+    this.root = node;
+  }
+
+  this.root.addNode(node);
+  return this;
+
+};
 BST.prototype.addNodeWithValue = function(value){ //wrapper function for node prototype method
   if (!this.root) {
     this.root = new Node(value);
@@ -42,29 +70,40 @@ BST.prototype.deleteNode = function(val){
 
   var returned = this.search(val);
   if (!returned.node) return false;
-  var replacement = {
-    node: null,
-    parent: null,
-  };
 
-  if (returned.node.left) {
-    replacement = findMax(returned.node.left);
-  } else if (returned.node.right) {
-    replacement = findMin(returned.node.right);
-  } else {
-    if ( returned.parent.left === returned.node) returned.parent.left = null;
-    if ( returned.parent.right === returned.node) returned.parent.right = null;
+
+  var replacement = findMax(returned.node.left) || findMin(returned.node.right);
+
+  if (!replacement) {
+    setParentNull(returned.parent, returned.node);
     return this;
   }
-  if ( !replacement.parent)replacement.parent = returned.node;
+
+  if (this.root === returned.node) this.root = replacement.node;
+  replacement.child = replacement.node.left || replacement.node.right;
+  if (!replacement.parent) replacement.parent = returned.node;
+
   if ( replacement.node !== returned.node.left) replacement.node.left = returned.node.left;
   if ( replacement.node !== returned.node.right) replacement.node.right = returned.node.right;
-  if ( replacement.parent.left === replacement.node) replacement.parent.left = null;
-  if ( replacement.parent.right === replacement.node) replacement.parent.right = null;
-  if ( returned.parent.left === returned.node) returned.parent.left = replacement.node;
-  if ( returned.parent.right === returned.node) returned.parent.right = replacement.node;
+
+  if (returned.parent) returned.parent = resetParent(returned.parent, returned.node, replacement.node);
+
+  replacement.parent = setParentNull(replacement.parent, replacement.node);
+
+  if (replacement.child) this.addNode(replacement.child);
 
   return this;
+
+  function setParentNull(parent, child){
+    if( parent.left === child) parent.left = null;
+    if( parent.right === child) parent.right = null;
+    return parent;
+  }
+  function resetParent(parent,oldChild, newChild){
+    if ( parent.left === oldChild) parent.left = newChild;
+    if ( parent.right === oldChild) parent.right = newChild;
+    return parent;
+  }
 };
 
 BST.prototype.search = function(value){
@@ -88,6 +127,7 @@ BST.prototype.search = function(value){
 };
 
 function findMin(node){
+  if (!node) return false;
   var found =  {};
   return _innerFind(node);
 
@@ -102,6 +142,7 @@ function findMin(node){
 }
 
 function findMax(node){
+  if (!node) return false;
   var found =  {};
   return _innerFind(node);
 
@@ -131,5 +172,6 @@ bst.addNodeWithValue(11);
 bst.addNodeWithValue(22);
 bst.addNodeWithValue(5);
 bst.addNodeWithValue(44);
+bst.addNodeWithValue(21);
 
 
